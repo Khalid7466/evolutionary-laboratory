@@ -9,7 +9,7 @@ Designed with a strict Object-Oriented Architecture, the application completely 
 ## 🚀 Key Features
 
 - **Modern Desktop UI:** Built using `CustomTkinter` for a sleek, responsive, dark/light theme user experience.
-- **Decoupled Architecture:** Clean separation of concerns between the UI views (`src/gui/`) and the algorithmic solvers (`src/optimizers/`).
+- **Decoupled Architecture:** Clean separation of concerns between the UI views (`src/gui/`) and the core engine (`src/core/`, `src/algorithms/`).
 - **Multithreaded Execution:** Optimization loops run on separate worker threads to keep the GUI fully responsive and prevent freezing during heavy calculations.
 - **Real-Time Visualization:** Embedded `Matplotlib` canvas displays dynamic convergence curves (Fitness vs. Generations/Iterations) for immediate analysis.
 - **Comprehensive Problem Suite:** Solves 8 complex computational problems across 4 foundational domains using natural encodings (Binary, Real-Coded, and Permutation).
@@ -26,24 +26,46 @@ EvoLab/
 ├── uv.lock                 # Strict dependency lock file for reproducibility
 ├── README.md               # Comprehensive documentation
 ├── .gitignore              # Files and directories to be ignored by Git
+├── main.py                 # Lightweight CLI entry (temporary)
+├── org-notebooks/          # Original notebooks (reference only)
 ├── src/                    # Main source code directory
-│   ├── main.py             # Application entry point
-│   ├── optimizers/         # Core Optimization Engine (Phase 1)
+│   ├── main.py             # Application entry point (Phase 2)
+│   ├── core/               # Core engine contracts and shared logic
 │   │   ├── __init__.py
-│   │   ├── base.py         # Abstract Base Classes (BaseOptimizer, BaseGA, BasePSO)
-│   │   ├── function_opt.py # Mathematical Function Optimization
-│   │   ├── knapsack.py     # 0/1 Knapsack Problem
-│   │   ├── tsp.py          # Traveling Salesperson Problem
-│   │   ├── vrp.py          # Vehicle Routing Problem
-│   │   ├── nqueens.py      # N-Queens Constraint Problem
-│   │   ├── nsp.py          # Nurse Scheduling Problem
-│   │   ├── graph_coloring.py # Graph Coloring Problem
-│   │   └── feature_selection.py # ML Feature Selection (Classification & Regression)
-│   │
+│   │   ├── base.py          # BaseOptimizer, BaseGA, BasePSO
+│   │   ├── registry.py      # Unified entry point for GUI
+│   │   └── validation.py    # Input validation and bounds checks
+│   ├── encodings/          # Genotype/phenotype conversions
+│   │   ├── __init__.py
+│   │   ├── binary.py
+│   │   ├── gray.py
+│   │   ├── real.py
+│   │   └── permutation.py
+│   ├── operators/          # Selection, crossover, and mutation operators
+│   │   └── __init__.py
+│   ├── algorithms/         # Problem implementations
+│   │   ├── __init__.py
+│   │   ├── ga/
+│   │   │   ├── __init__.py
+│   │   │   └── problems/
+│   │   │       ├── __init__.py
+│   │   │       ├── function_opt.py
+│   │   │       ├── knapsack.py
+│   │   │       ├── tsp.py
+│   │   │       ├── vrp.py
+│   │   │       ├── nqueens.py
+│   │   │       ├── nsp.py
+│   │   │       ├── graph_coloring.py
+│   │   │       └── feature_selection.py
+│   │   └── pso/
+│   │       ├── __init__.py
+│   │       └── problems/
+│   │           ├── __init__.py
+│   │           └── function_opt.py
 │   └── gui/                # User Interface Module (Phase 2)
 │       ├── __init__.py
-│       ├── app.py          # Main application window framework
-│       └── components.py   # UI widgets, sidebars, and plot frames
+│       ├── app.py           # Main application window framework
+│       └── components.py    # UI widgets, sidebars, and plot frames
 │
 └── tests/                  # Backend Testing Suite
     └── test_optimizers.py  # Unit tests for core algorithm validation
@@ -83,21 +105,41 @@ The core solver engine relies on robust Object-Oriented Principles. Adding a new
 ```python
 # Conceptual architecture of the backend engine
 class BaseOptimizer:
-    def solve(self, callback=None):
+    def run(self, callback=None):
         raise NotImplementedError
 
-class BaseGeneticAlgorithm(BaseOptimizer):
+class BaseGA(BaseOptimizer):
     def initialize_population(self): pass
     def evaluate_fitness(self): pass
-    def selection(self): pass
+    def select_parent(self): pass
     def crossover(self): pass
-    def mutation(self): pass
+    def mutate(self): pass
 
-class KnapsackGA(BaseGeneticAlgorithm):
+class KnapsackGA(BaseGA):
     # Overrides fitness evaluation specifically for the Knapsack problem
     def evaluate_fitness(self, chromosome): pass
 
 ```
+
+---
+
+## 🧭 Folder Guide
+
+**Top-level**
+
+- **src/**: All production source code.
+- **tests/**: Phase 1 validation tests for all solvers.
+- **org-notebooks/**: Original reference notebooks only (no production code).
+- **main.py**: Lightweight CLI entry (temporary until GUI is complete).
+
+**Inside `src/`**
+
+- **core/**: Base classes, shared engine contracts, registry, and validation logic.
+- **encodings/**: Binary, gray, real, and permutation encoding utilities.
+- **operators/**: Reusable GA operators (selection, crossover, mutation).
+- **algorithms/ga/**: All GA problem implementations grouped under one namespace.
+- **algorithms/pso/**: PSO problem implementations.
+- **gui/**: UI layer (must not import from GUI inside core/algorithms).
 
 ---
 
