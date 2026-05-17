@@ -181,7 +181,7 @@ class GAView(ctk.CTkFrame):
 		self.run_btn.pack(fill="x", padx=15, pady=10)
 
 		# Bottom Row - Results
-		self.result_container = ctk.CTkFrame(self, fg_color=theme.BG_CARD, height=150)
+		self.result_container = ctk.CTkFrame(self, fg_color=theme.BG_CARD, height=170)
 		self.result_container.pack(fill="x", padx=15, pady=(0, 15))
 
 		self.status_lbl = ctk.CTkLabel(
@@ -197,7 +197,7 @@ class GAView(ctk.CTkFrame):
 			font=theme.F_BODY,
 			fg_color=theme.BG_MAIN,
 			text_color=theme.TEXT_OK,
-			height=90,
+			height=110,
 			state="disabled"
 		)
 		self.result_box.pack(fill="both", expand=True, padx=15, pady=(0, 10))
