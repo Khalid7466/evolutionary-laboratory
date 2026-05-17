@@ -55,7 +55,7 @@ class PSOView(ctk.CTkFrame):
 		self.inputs_container.pack(fill="both", expand=True)
 
 		self.inputs_scroll = ctk.CTkScrollableFrame(self.inputs_container, fg_color="transparent")
-		self.inputs_scroll.pack(fill="both", expand=True, padx=15, pady=(15, 10))
+		self.inputs_scroll.pack(fill="both", expand=True, padx=15, pady=(10, 5))
 
 		self._build_inputs()
 
@@ -69,7 +69,7 @@ class PSOView(ctk.CTkFrame):
 			height=40,
 			command=self._on_run
 		)
-		self.run_btn.pack(fill="x", padx=15, pady=15)
+		self.run_btn.pack(fill="x", padx=15, pady=10)
 
 		# Results Panel
 		self.result_container = ctk.CTkFrame(self, fg_color=theme.BG_CARD, height=150)
@@ -100,7 +100,7 @@ class PSOView(ctk.CTkFrame):
 	def _build_inputs(self):
 		for p in PSO_PARAMS:
 			row = ctk.CTkFrame(self.inputs_scroll, fg_color="transparent")
-			row.pack(fill="x", pady=3, padx=5)
+			row.pack(fill="x", pady=1.5, padx=5)
 
 			lbl = ctk.CTkLabel(row, text=p["label"], font=theme.F_BODY, text_color=theme.TEXT_SUB, width=200, anchor="w")
 			lbl.pack(side="left")

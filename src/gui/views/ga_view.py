@@ -128,16 +128,23 @@ class GAView(ctk.CTkFrame):
 		body_frame = ctk.CTkFrame(self, fg_color="transparent")
 		body_frame.pack(fill="both", expand=True, padx=15, pady=(0, 10))
 
-		# Left Panel - Problems list
-		self.problems_frame = ctk.CTkScrollableFrame(
-			body_frame,
-			fg_color=theme.BG_CARD,
-			width=220,
-			label_text="Problems List",
-			label_font=theme.F_HEAD,
-			label_text_color=theme.TEXT_MAIN
+		# Left Panel - Problems container frame
+		left_panel = ctk.CTkFrame(body_frame, fg_color=theme.BG_CARD, width=220)
+		left_panel.pack(side="left", fill="both", expand=False, padx=(0, 10))
+
+		# Custom Premium Header Label
+		problems_lbl = ctk.CTkLabel(
+			left_panel,
+			text="Problems List",
+			font=theme.F_HEAD,
+			text_color=theme.TEXT_MAIN,
+			anchor="w"
 		)
-		self.problems_frame.pack(side="left", fill="both", expand=False, padx=(0, 10))
+		problems_lbl.pack(fill="x", padx=15, pady=(15, 10))
+
+		# Scrollable list of problems
+		self.problems_frame = ctk.CTkScrollableFrame(left_panel, fg_color="transparent")
+		self.problems_frame.pack(fill="both", expand=True, padx=5, pady=(0, 10))
 		self._problem_buttons = {}
 
 		for key, display_name in PROBLEM_DISPLAY.items():
@@ -159,7 +166,7 @@ class GAView(ctk.CTkFrame):
 		self.inputs_container.pack(side="right", fill="both", expand=True)
 
 		self.inputs_scroll = ctk.CTkScrollableFrame(self.inputs_container, fg_color="transparent")
-		self.inputs_scroll.pack(fill="both", expand=True, padx=15, pady=(15, 10))
+		self.inputs_scroll.pack(fill="both", expand=True, padx=15, pady=(10, 5))
 
 		# Run Button inside inputs container
 		self.run_btn = ctk.CTkButton(
@@ -171,7 +178,7 @@ class GAView(ctk.CTkFrame):
 			height=40,
 			command=self._on_run
 		)
-		self.run_btn.pack(fill="x", padx=15, pady=15)
+		self.run_btn.pack(fill="x", padx=15, pady=10)
 
 		# Bottom Row - Results
 		self.result_container = ctk.CTkFrame(self, fg_color=theme.BG_CARD, height=150)
@@ -231,12 +238,12 @@ class GAView(ctk.CTkFrame):
 			font=theme.F_HEAD,
 			text_color=theme.TEXT_MAIN
 		)
-		p_title.pack(anchor="w", pady=(0, 15), padx=5)
+		p_title.pack(anchor="w", pady=(0, 5), padx=5)
 
 		params_def = PROBLEM_PARAMS[problem_key]
 		for p in params_def:
 			row = ctk.CTkFrame(self.inputs_scroll, fg_color="transparent")
-			row.pack(fill="x", pady=3, padx=5)
+			row.pack(fill="x", pady=1.5, padx=5)
 
 			lbl = ctk.CTkLabel(row, text=p["label"], font=theme.F_BODY, text_color=theme.TEXT_SUB, width=160, anchor="w")
 			lbl.pack(side="left")
