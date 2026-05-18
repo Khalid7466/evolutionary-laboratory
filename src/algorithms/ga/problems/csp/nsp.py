@@ -4,6 +4,9 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 
 from core.base import BaseGA
+from operators.crossover import column_crossover
+from operators.mutation import random_reset_matrix
+from operators.selection import tournament_select
 
 
 class NurseSchedulingGA(BaseGA):
@@ -58,22 +61,17 @@ class NurseSchedulingGA(BaseGA):
 	def select_parent(
 		self, population: Sequence[np.ndarray], fitness_scores: Sequence[float]
 	) -> np.ndarray:
-		indices = self.random.sample(range(len(population)), self.selection_k)
-		best_idx = max(
-			indices,
-			key=lambda i: fitness_scores[i] if self.maximize else -fitness_scores[i],
+		selected = tournament_select(
+			population,
+			fitness_scores,
+			self.selection_k,
+			maximize=self.maximize,
+			rnd=self.random,
 		)
-		return population[best_idx].copy()
+		return selected.copy()
 
 	def crossover(self, parent1: np.ndarray, parent2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-		point = self.random.randint(1, self.days - 1)
-		child1 = np.hstack((parent1[:, :point], parent2[:, point:]))
-		child2 = np.hstack((parent2[:, :point], parent1[:, point:]))
-		return child1, child2
+		return column_crossover(parent1, parent2, rnd=self.random)
 
 	def mutate(self, individual: np.ndarray) -> np.ndarray:
-		mutated = individual.copy()
-		nurse = self.random.randint(0, self.num_nurses - 1)
-		day = self.random.randint(0, self.days - 1)
-		mutated[nurse][day] = self.random.choice(self.shifts)
-		return mutated
+		return random_reset_matrix(individual, rnd=self.random, choices=self.shifts)

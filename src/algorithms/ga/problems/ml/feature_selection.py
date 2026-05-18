@@ -10,6 +10,9 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, r2_score
 
 from core.base import BaseGA
+from operators.crossover import one_point_crossover
+from operators.mutation import single_bit_flip
+from operators.selection import tournament_select
 
 
 class FeatureSelectionGA(BaseGA):
@@ -105,24 +108,20 @@ class FeatureSelectionGA(BaseGA):
 	def select_parent(
 		self, population: Sequence[List[int]], fitness_scores: Sequence[float]
 	) -> List[int]:
-		indices = self.random.sample(range(len(population)), self.selection_k)
-		best_idx = max(
-			indices,
-			key=lambda i: fitness_scores[i] if self.maximize else -fitness_scores[i],
+		selected = tournament_select(
+			population,
+			fitness_scores,
+			self.selection_k,
+			maximize=self.maximize,
+			rnd=self.random,
 		)
-		return list(population[best_idx])
+		return list(selected)
 
 	def crossover(self, parent1: List[int], parent2: List[int]) -> Tuple[List[int], List[int]]:
-		point = self.random.randint(1, self.num_features - 1)
-		child1 = parent1[:point] + parent2[point:]
-		child2 = parent2[:point] + parent1[point:]
-		return list(child1), list(child2)
+		return one_point_crossover(parent1, parent2, rnd=self.random)
 
 	def mutate(self, individual: List[int]) -> List[int]:
-		mutated = list(individual)
-		idx = self.random.randint(0, self.num_features - 1)
-		mutated[idx] = 1 - mutated[idx]
-		return mutated
+		return single_bit_flip(individual, rnd=self.random)
 
 
 def load_regression_data(

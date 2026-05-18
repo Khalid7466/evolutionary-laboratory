@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import List, Optional, Sequence, Tuple
 
 from core.base import BaseGA
+from operators.crossover import order_crossover
+from operators.mutation import swap_mutation
+from operators.selection import tournament_select
 
 
 class NQueensGA(BaseGA):
@@ -50,40 +53,20 @@ class NQueensGA(BaseGA):
 	def select_parent(
 		self, population: Sequence[List[int]], fitness_scores: Sequence[float]
 	) -> List[int]:
-		indices = self.random.sample(range(len(population)), self.selection_k)
-		best_idx = max(
-			indices,
-			key=lambda i: fitness_scores[i] if self.maximize else -fitness_scores[i],
+		selected = tournament_select(
+			population,
+			fitness_scores,
+			self.selection_k,
+			maximize=self.maximize,
+			rnd=self.random,
 		)
-		return list(population[best_idx])
+		return list(selected)
 
 	def crossover(self, parent1: List[int], parent2: List[int]) -> Tuple[List[int], List[int]]:
-		size = len(parent1)
-		start, end = sorted(self.random.sample(range(size), 2))
-		child = [None] * size
-		child[start:end] = parent1[start:end]
-		fill = [gene for gene in parent2 if gene not in child]
-		j = 0
-		for i in range(size):
-			if child[i] is None:
-				child[i] = fill[j]
-				j += 1
-		child2 = [None] * size
-		child2[start:end] = parent2[start:end]
-		fill2 = [gene for gene in parent1 if gene not in child2]
-		j = 0
-		for i in range(size):
-			if child2[i] is None:
-				child2[i] = fill2[j]
-				j += 1
-		return list(child), list(child2)
+		return order_crossover(parent1, parent2, rnd=self.random)
 
 	def mutate(self, individual: List[int]) -> List[int]:
-		mutated = list(individual)
-		if len(mutated) >= 2:
-			i, j = self.random.sample(range(len(mutated)), 2)
-			mutated[i], mutated[j] = mutated[j], mutated[i]
-		return mutated
+		return swap_mutation(individual, rnd=self.random)
 
 	def should_stop(
 		self,

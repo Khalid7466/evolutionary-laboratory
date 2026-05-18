@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import List, Optional, Sequence, Tuple
 
 from core.base import BaseGA
+from operators.crossover import one_point_crossover
+from operators.mutation import bit_flip_mutation
+from operators.selection import roulette_select
 
 
 class KnapsackGA(BaseGA):
@@ -58,24 +61,11 @@ class KnapsackGA(BaseGA):
 	def select_parent(
 		self, population: Sequence[List[int]], fitness_scores: Sequence[float]
 	) -> List[int]:
-		total_fitness = float(sum(fitness_scores))
-		if total_fitness == 0.0:
-			return list(self.random.choice(population))
-		probabilities = [score / total_fitness for score in fitness_scores]
-		selected = self.random.choices(population, probabilities, k=1)[0]
+		selected = roulette_select(population, fitness_scores, rnd=self.random)
 		return list(selected)
 
 	def crossover(self, parent1: List[int], parent2: List[int]) -> Tuple[List[int], List[int]]:
-		if self.num_items < 2:
-			return list(parent1), list(parent2)
-		point = self.random.randint(1, self.num_items - 1)
-		child1 = parent1[:point] + parent2[point:]
-		child2 = parent2[:point] + parent1[point:]
-		return child1, child2
+		return one_point_crossover(parent1, parent2, rnd=self.random)
 
 	def mutate(self, individual: List[int]) -> List[int]:
-		mutated = list(individual)
-		for i in range(self.num_items):
-			if self.random.random() < self.bit_mutation_prob:
-				mutated[i] = 1 - mutated[i]
-		return mutated
+		return bit_flip_mutation(individual, rnd=self.random, prob=self.bit_mutation_prob)

@@ -4,6 +4,9 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 
 from core.base import BaseGA
+from operators.crossover import order_crossover
+from operators.mutation import swap_mutation
+from operators.selection import tournament_select
 
 
 class TSPGA(BaseGA):
@@ -75,38 +78,21 @@ class TSPGA(BaseGA):
 	def select_parent(
 		self, population: Sequence[List[int]], fitness_scores: Sequence[float]
 	) -> List[int]:
-		indices = self.random.sample(range(len(population)), self.selection_k)
-		best_idx = max(
-			indices,
-			key=lambda i: fitness_scores[i] if self.maximize else -fitness_scores[i],
+		selected = tournament_select(
+			population,
+			fitness_scores,
+			self.selection_k,
+			maximize=self.maximize,
+			rnd=self.random,
 		)
-		return list(population[best_idx])
+		return list(selected)
 
 	def crossover(self, parent1: List[int], parent2: List[int]) -> Tuple[List[int], List[int]]:
-		size = len(parent1)
-		start, end = sorted(self.random.sample(range(size), 2))
-
-		def build_child(p1: List[int], p2: List[int]) -> List[int]:
-			child = [None] * size
-			child[start:end] = p1[start:end]
-			idx = end % size
-			for gene in p2:
-				if gene not in child:
-					while child[idx] is not None:
-						idx = (idx + 1) % size
-					child[idx] = gene
-					idx = (idx + 1) % size
-			return child
-
-		child1 = build_child(parent1, parent2)
-		child2 = build_child(parent2, parent1)
+		child1, child2 = order_crossover(parent1, parent2, rnd=self.random)
 		return self._normalize(child1), self._normalize(child2)
 
 	def mutate(self, individual: List[int]) -> List[int]:
-		mutated = list(individual)
-		if len(mutated) >= 2:
-			i, j = self.random.sample(range(len(mutated)), 2)
-			mutated[i], mutated[j] = mutated[j], mutated[i]
+		mutated = swap_mutation(individual, rnd=self.random)
 		return self._normalize(mutated)
 
 	def decode(self, chrom: List[int]) -> List[str] | List[int]:

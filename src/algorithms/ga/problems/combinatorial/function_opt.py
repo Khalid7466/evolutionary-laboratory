@@ -4,6 +4,9 @@ from typing import Callable, List, Optional, Tuple
 import numpy as np
 
 from core.base import BaseGA
+from operators.crossover import arithmetic_crossover
+from operators.mutation import gaussian_mutation
+from operators.selection import tournament_select_np
 
 
 FitnessFunction = Callable[[float], float]
@@ -51,19 +54,23 @@ class FunctionOptimizationGA(BaseGA):
 		return float(self.fitness_fn(individual))
 
 	def select_parent(self, population: List[float], fitness_scores: List[float]) -> float:
-		indices = self.rng.choice(len(population), size=self.selection_k, replace=False)
-		best_idx = max(
-			indices,
-			key=lambda i: fitness_scores[i] if self.maximize else -fitness_scores[i],
+		selected = tournament_select_np(
+			population,
+			fitness_scores,
+			self.selection_k,
+			maximize=self.maximize,
+			rng=self.rng,
 		)
-		return float(population[int(best_idx)])
+		return float(selected)
 
 	def crossover(self, parent1: float, parent2: float) -> Tuple[float, float]:
-		alpha = float(self.rng.random())
-		c1 = alpha * parent1 + (1.0 - alpha) * parent2
-		c2 = alpha * parent2 + (1.0 - alpha) * parent1
-		return float(c1), float(c2)
+		return arithmetic_crossover(parent1, parent2, rng=self.rng)
 
 	def mutate(self, individual: float) -> float:
-		mutated = individual + float(self.rng.normal(0.0, self.mutation_std))
-		return float(np.clip(mutated, self.x_min, self.x_max))
+		return gaussian_mutation(
+			individual,
+			rng=self.rng,
+			std=self.mutation_std,
+			min_val=self.x_min,
+			max_val=self.x_max,
+		)
