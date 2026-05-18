@@ -5,8 +5,8 @@ import numpy as np
 
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, r2_score
 
 from core.base import BaseGA
@@ -21,6 +21,7 @@ class FeatureSelectionGA(BaseGA):
 		y_train: np.ndarray,
 		y_test: np.ndarray,
 		task: str = "regression",
+		model: str = "linear",
 		population_size: int = 20,
 		generations: int = 30,
 		mutation_prob: float = 0.3,
@@ -43,6 +44,8 @@ class FeatureSelectionGA(BaseGA):
 		self.y_test = y_test
 		self.num_features = x_train.shape[1]
 		self.task = task
+		self.model_key = model.strip().lower().replace(" ", "_")
+		self._fitness_cache: dict[tuple[int, ...], float] = {}
 		self.selection_k = max(2, selection_k)
 		if task not in {"regression", "classification"}:
 			raise ValueError("task must be 'regression' or 'classification'.")
@@ -54,22 +57,50 @@ class FeatureSelectionGA(BaseGA):
 		]
 
 	def evaluate_fitness(self, individual: List[int]) -> float:
+		key = tuple(individual)
+		cached = self._fitness_cache.get(key)
+		if cached is not None:
+			return cached
 		if sum(individual) == 0:
-			return -1.0 if self.task == "regression" else 0.0
+			fitness = -1.0 if self.task == "regression" else 0.0
+			self._fitness_cache[key] = fitness
+			return fitness
 		selected = [i for i in range(self.num_features) if individual[i] == 1]
 		x_train = self.x_train[:, selected]
 		x_test = self.x_test[:, selected]
 
 		if self.task == "regression":
-			model = LinearRegression()
-			model.fit(x_train, self.y_train)
-			preds = model.predict(x_test)
-			return float(r2_score(self.y_test, preds))
+			regressor = self._build_regressor()
+			regressor.fit(x_train, self.y_train)
+			preds = regressor.predict(x_test)
+			fitness = float(r2_score(self.y_test, preds))
+			self._fitness_cache[key] = fitness
+			return fitness
 
-		model = RandomForestClassifier()
-		model.fit(x_train, self.y_train)
-		preds = model.predict(x_test)
-		return float(accuracy_score(self.y_test, preds))
+		classifier = self._build_classifier()
+		classifier.fit(x_train, self.y_train)
+		preds = classifier.predict(x_test)
+		fitness = float(accuracy_score(self.y_test, preds))
+		self._fitness_cache[key] = fitness
+		return fitness
+
+	def _build_regressor(self):
+		if self.model_key in {"random_forest", "random_forest_regressor"}:
+			return RandomForestRegressor(
+				n_estimators=50,
+				max_depth=6,
+				random_state=self.seed,
+			)
+		return LinearRegression()
+
+	def _build_classifier(self):
+		if self.model_key in {"logistic", "logistic_regression", "linear", "linear_regression"}:
+			return LogisticRegression(max_iter=300, random_state=self.seed, solver="lbfgs")
+		return RandomForestClassifier(
+			n_estimators=50,
+			max_depth=6,
+			random_state=self.seed,
+		)
 
 	def select_parent(
 		self, population: Sequence[List[int]], fitness_scores: Sequence[float]

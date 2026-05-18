@@ -84,12 +84,14 @@ PROBLEM_PARAMS = {
 		{"label": "Seed",              "key": "seed",        "type": "int",   "default": "42"},
 	],
 	"ga_feature_selection": [
-		{"label": "Population Size",   "key": "pop_size",    "type": "int",   "default": "50"},
-		{"label": "Generations",       "key": "generations", "type": "int",   "default": "100"},
+		{"label": "Population Size",   "key": "pop_size",    "type": "int",   "default": "30"},
+		{"label": "Generations",       "key": "generations", "type": "int",   "default": "60"},
 		{"label": "Crossover Rate",    "key": "cx_rate",     "type": "float", "default": "0.80"},
 		{"label": "Mutation Rate",     "key": "mut_rate",    "type": "float", "default": "0.05"},
 		{"label": "Dataset", "key": "dataset", "type": "choice",
 		 "options": ["Friedman (Regression)", "Iris (Classification)"], "default": "Friedman (Regression)"},
+		{"label": "Model", "key": "model", "type": "choice",
+		 "options": ["Logistic", "Random Forest"], "default": "Logistic"},
 		{"label": "Seed",              "key": "seed",        "type": "int",   "default": "42"},
 	],
 }
@@ -436,6 +438,7 @@ class GAView(ctk.CTkFrame):
 				task_type = "classification" if "Iris" in params["dataset"] else "regression"
 				solver_params.update({
 					"task": task_type,
+					"model": params.get("model", "Logistic"),
 					"mutation_prob": mut_rate,
 				})
 
