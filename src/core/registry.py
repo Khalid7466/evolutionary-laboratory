@@ -7,18 +7,18 @@ import time
 
 import numpy as np
 
-from algorithms.ga.problems.feature_selection import (
+from algorithms.ga.problems.ml.feature_selection import (
 	FeatureSelectionGA,
 	load_classification_data,
 	load_regression_data,
 )
-from algorithms.ga.problems.function_opt import FunctionOptimizationGA
-from algorithms.ga.problems.graph_coloring import GraphColoringGA
-from algorithms.ga.problems.knapsack import KnapsackGA
-from algorithms.ga.problems.nqueens import NQueensGA
-from algorithms.ga.problems.nsp import NurseSchedulingGA
-from algorithms.ga.problems.tsp import TSPGA
-from algorithms.ga.problems.vrp import VRPGA
+from algorithms.ga.problems.combinatorial.function_opt import FunctionOptimizationGA
+from algorithms.ga.problems.csp.graph_coloring import GraphColoringGA
+from algorithms.ga.problems.combinatorial.knapsack import KnapsackGA
+from algorithms.ga.problems.csp.nqueens import NQueensGA
+from algorithms.ga.problems.csp.nsp import NurseSchedulingGA
+from algorithms.ga.problems.routing.tsp import TSPGA
+from algorithms.ga.problems.routing.vrp import VRPGA
 from algorithms.pso.problems.function_opt import FunctionOptimizationPSO
 from core.validation import SpecError, normalize_choice, require, require_keys
 

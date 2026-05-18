@@ -15,6 +15,13 @@ PROBLEM_DISPLAY = {
 	"ga_feature_selection": "Feature Selection",
 }
 
+CATEGORY_GROUPS = [
+	("combinatorial", "Combinatorial & Function Optimization", ["ga_function_opt", "ga_knapsack"]),
+	("routing", "Routing & Logistics", ["ga_tsp", "ga_vrp"]),
+	("csp", "Constraint Satisfaction (CSP)", ["ga_nqueens", "ga_nsp", "ga_graph_coloring"]),
+	("ml", "Machine Learning Applications", ["ga_feature_selection"]),
+]
+
 PROBLEM_PARAMS = {
 	"ga_function_opt": [
 		{"label": "Population Size",   "key": "pop_size",    "type": "int",   "default": "100"},
@@ -101,6 +108,7 @@ class GAView(ctk.CTkFrame):
 		super().__init__(parent, fg_color=theme.BG_MAIN, **kwargs)
 		self.app = app
 		self._selected_problem = "ga_function_opt"
+		self._selected_category = CATEGORY_GROUPS[0][0]
 		self._entries = {}
 
 		# Header
@@ -134,34 +142,47 @@ class GAView(ctk.CTkFrame):
 		left_panel = ctk.CTkFrame(body_frame, fg_color=theme.BG_CARD, width=220)
 		left_panel.pack(side="left", fill="both", expand=False, padx=(0, 10))
 
-		# Custom Premium Header Label
-		problems_lbl = ctk.CTkLabel(
+		# Category cards
+		categories_lbl = ctk.CTkLabel(
 			left_panel,
-			text="Problems List",
+			text="Problem Categories",
 			font=theme.F_HEAD,
 			text_color=theme.TEXT_MAIN,
-			anchor="w"
+			anchor="w",
 		)
-		problems_lbl.pack(fill="x", padx=15, pady=(15, 10))
+		categories_lbl.pack(fill="x", padx=15, pady=(15, 8))
 
-		# Scrollable list of problems
+		self.category_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+		self.category_frame.pack(fill="x", padx=12)
+		self._category_buttons = {}
+
+		for key, label, _ in CATEGORY_GROUPS:
+			btn = ctk.CTkButton(
+				self.category_frame,
+				text=label,
+				font=theme.F_BODY,
+				fg_color=theme.BG_INPUT,
+				text_color=theme.TEXT_MAIN,
+				hover_color="#1d273a",
+				height=46,
+				command=lambda k=key: self._select_category(k),
+			)
+			btn.pack(fill="x", pady=6)
+			self._category_buttons[key] = btn
+
+		problems_lbl = ctk.CTkLabel(
+			left_panel,
+			text="Problems",
+			font=theme.F_HEAD,
+			text_color=theme.TEXT_MAIN,
+			anchor="w",
+		)
+		problems_lbl.pack(fill="x", padx=15, pady=(12, 6))
+
 		self.problems_frame = ctk.CTkScrollableFrame(left_panel, fg_color="transparent")
 		self.problems_frame.pack(fill="both", expand=True, padx=5, pady=(0, 10))
 		self._problem_buttons = {}
-
-		for key, display_name in PROBLEM_DISPLAY.items():
-			btn = ctk.CTkButton(
-				self.problems_frame,
-				text=display_name,
-				font=theme.F_BODY,
-				anchor="w",
-				fg_color="transparent",
-				text_color=theme.TEXT_SUB,
-				hover_color="#1d273a",
-				command=lambda k=key: self._select_problem_view(k)
-			)
-			btn.pack(fill="x", pady=2, padx=4)
-			self._problem_buttons[key] = btn
+		self._render_problem_list(self._selected_category)
 
 		# Right Panel - Dynamic parameters inputs
 		self.inputs_container = ctk.CTkFrame(body_frame, fg_color=theme.BG_CARD, width=540)
@@ -205,7 +226,7 @@ class GAView(ctk.CTkFrame):
 		self.result_box.pack(fill="both", expand=True, padx=15, pady=(0, 10))
 
 		# Render default view
-		self._select_problem_view(self._selected_problem)
+		self._select_category(self._selected_category)
 
 	def _on_back(self):
 		from gui.views.home import HomeView
@@ -226,6 +247,44 @@ class GAView(ctk.CTkFrame):
 
 		# Reset status
 		self._show_result("اختر مشكلة وابدأ التشغيل / Choose a problem and click Run")
+
+	def _select_category(self, category_key: str) -> None:
+		self._selected_category = category_key
+		for key, btn in self._category_buttons.items():
+			if key == category_key:
+				btn.configure(fg_color=theme.ACCENT, text_color=theme.TEXT_MAIN)
+			else:
+				btn.configure(fg_color=theme.BG_INPUT, text_color=theme.TEXT_MAIN)
+		self._render_problem_list(category_key)
+
+		problems = self._get_category_problems(category_key)
+		if problems:
+			self._select_problem_view(problems[0])
+
+	def _render_problem_list(self, category_key: str) -> None:
+		for w in self.problems_frame.winfo_children():
+			w.destroy()
+		self._problem_buttons = {}
+		for key in self._get_category_problems(category_key):
+			display_name = PROBLEM_DISPLAY.get(key, key)
+			btn = ctk.CTkButton(
+				self.problems_frame,
+				text=display_name,
+				font=theme.F_BODY,
+				anchor="w",
+				fg_color="transparent",
+				text_color=theme.TEXT_SUB,
+				hover_color="#1d273a",
+				command=lambda k=key: self._select_problem_view(k),
+			)
+			btn.pack(fill="x", pady=2, padx=4)
+			self._problem_buttons[key] = btn
+
+	def _get_category_problems(self, category_key: str) -> list[str]:
+		for key, _label, keys in CATEGORY_GROUPS:
+			if key == category_key:
+				return list(keys)
+		return []
 
 	def _build_inputs(self, problem_key):
 		# Clear inputs scroll area

@@ -26,7 +26,7 @@ EvoLab/
 ├── uv.lock                 # Strict dependency lock file for reproducibility
 ├── README.md               # Comprehensive documentation
 ├── .gitignore              # Files and directories to be ignored by Git
-├── main.py                 # Lightweight CLI entry (temporary)
+├── main.py                 # Root entry point (launches GUI)
 ├── org-notebooks/          # Original notebooks (reference only)
 ├── src/                    # Main source code directory
 │   ├── main.py             # Application entry point (Phase 2)
@@ -49,14 +49,22 @@ EvoLab/
 │   │   │   ├── __init__.py
 │   │   │   └── problems/
 │   │   │       ├── __init__.py
-│   │   │       ├── function_opt.py
-│   │   │       ├── knapsack.py
-│   │   │       ├── tsp.py
-│   │   │       ├── vrp.py
-│   │   │       ├── nqueens.py
-│   │   │       ├── nsp.py
-│   │   │       ├── graph_coloring.py
-│   │   │       └── feature_selection.py
+│   │   │       ├── combinatorial/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── function_opt.py
+│   │   │       │   └── knapsack.py
+│   │   │       ├── routing/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── tsp.py
+│   │   │       │   └── vrp.py
+│   │   │       ├── csp/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── nqueens.py
+│   │   │       │   ├── nsp.py
+│   │   │       │   └── graph_coloring.py
+│   │   │       └── ml/
+│   │   │           ├── __init__.py
+│   │   │           └── feature_selection.py
 │   │   └── pso/
 │   │       ├── __init__.py
 │   │       └── problems/
@@ -65,7 +73,11 @@ EvoLab/
 │   └── gui/                # User Interface Module (Phase 2)
 │       ├── __init__.py
 │       ├── app.py           # Main application window framework
-│       └── components.py    # UI widgets, sidebars, and plot frames
+│       ├── theme.py         # GUI theme tokens
+│       └── views/           # Screens and view logic
+│           ├── home.py
+│           ├── ga_view.py
+│           └── pso_view.py
 │
 └── tests/                  # Backend Testing Suite
     └── test_optimizers.py  # Unit tests for core algorithm validation
@@ -137,9 +149,9 @@ class KnapsackGA(BaseGA):
 - **core/**: Base classes, shared engine contracts, registry, and validation logic.
 - **encodings/**: Binary, gray, real, and permutation encoding utilities.
 - **operators/**: Reusable GA operators (selection, crossover, mutation).
-- **algorithms/ga/**: All GA problem implementations grouped under one namespace.
+- **algorithms/ga/**: GA problem implementations grouped by domain (combinatorial, routing, CSP, ML).
 - **algorithms/pso/**: PSO problem implementations.
-- **gui/**: UI layer (must not import from GUI inside core/algorithms).
+- **gui/**: UI layer and screens (must not import from GUI inside core/algorithms).
 
 ---
 

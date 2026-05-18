@@ -11,18 +11,18 @@ SRC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 if SRC_DIR not in sys.path:
 	sys.path.insert(0, SRC_DIR)
 
-from algorithms.ga.problems.feature_selection import (  # noqa: E402
+from algorithms.ga.problems.ml.feature_selection import (  # noqa: E402
 	FeatureSelectionGA,
 	load_classification_data,
 	load_regression_data,
 )
-from algorithms.ga.problems.function_opt import FunctionOptimizationGA  # noqa: E402
-from algorithms.ga.problems.graph_coloring import GraphColoringGA  # noqa: E402
-from algorithms.ga.problems.knapsack import KnapsackGA  # noqa: E402
-from algorithms.ga.problems.nqueens import NQueensGA  # noqa: E402
-from algorithms.ga.problems.nsp import NurseSchedulingGA  # noqa: E402
-from algorithms.ga.problems.tsp import TSPGA  # noqa: E402
-from algorithms.ga.problems.vrp import VRPGA  # noqa: E402
+from algorithms.ga.problems.combinatorial.function_opt import FunctionOptimizationGA  # noqa: E402
+from algorithms.ga.problems.csp.graph_coloring import GraphColoringGA  # noqa: E402
+from algorithms.ga.problems.combinatorial.knapsack import KnapsackGA  # noqa: E402
+from algorithms.ga.problems.csp.nqueens import NQueensGA  # noqa: E402
+from algorithms.ga.problems.csp.nsp import NurseSchedulingGA  # noqa: E402
+from algorithms.ga.problems.routing.tsp import TSPGA  # noqa: E402
+from algorithms.ga.problems.routing.vrp import VRPGA  # noqa: E402
 from algorithms.pso.problems.function_opt import FunctionOptimizationPSO  # noqa: E402
 from core.registry import run_from_spec  # noqa: E402
 
