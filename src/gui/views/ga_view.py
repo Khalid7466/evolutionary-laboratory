@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import threading
 import random
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 from gui import theme
 from core import registry
 
@@ -180,13 +182,48 @@ class GAView(ctk.CTkFrame):
 		problems_lbl.pack(fill="x", padx=15, pady=(12, 6))
 
 		self.problems_frame = ctk.CTkScrollableFrame(left_panel, fg_color="transparent")
-		self.problems_frame.pack(fill="both", expand=True, padx=5, pady=(0, 10))
+		self.problems_frame.pack(fill="both", expand=True, padx=5, pady=(0, 8))
 		self._problem_buttons = {}
 		self._render_problem_list(self._selected_category)
 
-		# Right Panel - Dynamic parameters inputs
-		self.inputs_container = ctk.CTkFrame(body_frame, fg_color=theme.BG_CARD, width=540)
-		self.inputs_container.pack(side="right", fill="both", expand=True)
+		self.summary_container = ctk.CTkFrame(left_panel, fg_color=theme.BG_INPUT, height=90)
+		self.summary_container.pack(fill="x", padx=12, pady=(0, 12))
+		self.summary_container.pack_propagate(False)
+
+		summary_title = ctk.CTkLabel(
+			self.summary_container,
+			text="Last Run",
+			font=theme.F_SMALL,
+			text_color=theme.TEXT_SUB
+		)
+		summary_title.pack(anchor="w", padx=10, pady=(8, 0))
+
+		self.summary_status = ctk.CTkLabel(
+			self.summary_container,
+			text="Status: Ready",
+			font=theme.F_BODY,
+			text_color=theme.TEXT_SUB
+		)
+		self.summary_status.pack(anchor="w", padx=10)
+
+		self.summary_time = ctk.CTkLabel(
+			self.summary_container,
+			text="Time: --",
+			font=theme.F_SMALL,
+			text_color=theme.TEXT_SUB
+		)
+		self.summary_time.pack(anchor="w", padx=10, pady=(0, 6))
+
+		# Right Panel - Inputs + Results + Chart
+		right_panel = ctk.CTkFrame(body_frame, fg_color="transparent")
+		right_panel.pack(side="right", fill="both", expand=True)
+
+		top_row = ctk.CTkFrame(right_panel, fg_color="transparent", height=300)
+		top_row.pack(fill="x", pady=(0, 10))
+		top_row.pack_propagate(False)
+
+		self.inputs_container = ctk.CTkFrame(top_row, fg_color=theme.BG_CARD, width=540)
+		self.inputs_container.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
 		self.inputs_scroll = ctk.CTkScrollableFrame(self.inputs_container, fg_color="transparent")
 		self.inputs_scroll.pack(fill="both", expand=True, padx=15, pady=(10, 5))
@@ -203,9 +240,10 @@ class GAView(ctk.CTkFrame):
 		)
 		self.run_btn.pack(fill="x", padx=15, pady=10)
 
-		# Bottom Row - Results
-		self.result_container = ctk.CTkFrame(self, fg_color=theme.BG_CARD, height=170)
-		self.result_container.pack(fill="x", padx=15, pady=(0, 15))
+		# Results (right side of top row)
+		self.result_container = ctk.CTkFrame(top_row, fg_color=theme.BG_CARD, width=320)
+		self.result_container.pack(side="right", fill="both", expand=False)
+		self.result_container.pack_propagate(False)
 
 		self.status_lbl = ctk.CTkLabel(
 			self.result_container,
@@ -220,10 +258,14 @@ class GAView(ctk.CTkFrame):
 			font=theme.F_BODY,
 			fg_color=theme.BG_MAIN,
 			text_color=theme.TEXT_OK,
-			height=110,
 			state="disabled"
 		)
 		self.result_box.pack(fill="both", expand=True, padx=15, pady=(0, 10))
+
+		# Fitness chart
+		self.chart_container = ctk.CTkFrame(right_panel, fg_color=theme.BG_CARD)
+		self.chart_container.pack(fill="both", expand=True, pady=(0, 10))
+		self._init_chart()
 
 		# Render default view
 		self._select_category(self._selected_category)
@@ -247,6 +289,7 @@ class GAView(ctk.CTkFrame):
 
 		# Reset status
 		self._show_result("اختر مشكلة وابدأ التشغيل / Choose a problem and click Run")
+		self._update_summary("Ready", "--")
 
 	def _select_category(self, category_key: str) -> None:
 		self._selected_category = category_key
@@ -350,6 +393,11 @@ class GAView(ctk.CTkFrame):
 			text_color=theme.TEXT_ERR if error else theme.TEXT_OK
 		)
 
+	def _update_summary(self, status: str, time_text: str, error: bool = False) -> None:
+		status_color = theme.TEXT_ERR if error else (theme.TEXT_OK if status == "Completed" else theme.TEXT_SUB)
+		self.summary_status.configure(text=f"Status: {status}", text_color=status_color)
+		self.summary_time.configure(text=f"Time: {time_text}", text_color=theme.TEXT_SUB)
+
 	def _collect_params(self) -> dict:
 		params = {}
 		params_def = PROBLEM_PARAMS[self._selected_problem]
@@ -385,6 +433,8 @@ class GAView(ctk.CTkFrame):
 		# Lock run button
 		self.run_btn.configure(state="disabled", text="Running...")
 		self._show_result("Executing algorithm, please wait...", status_msg="Running...")
+		self._update_summary("Running...", "--")
+		self._reset_chart()
 
 		# Run in daemon background thread
 		thread = threading.Thread(target=self._run_worker, args=(params,), daemon=True)
@@ -518,19 +568,82 @@ class GAView(ctk.CTkFrame):
 				"parameters": solver_params
 			}
 
-			result = registry.run_from_spec(spec)
+			def callback(gen, _best_solution, best_fitness, _population, _fitness_scores):
+				value = float(best_fitness) if best_fitness is not None else 0.0
+				self.after(0, self._append_chart_point, gen + 1, value)
+
+			result = registry.run_from_spec(spec, callback=callback)
 			self.after(0, self._on_done, result)
 		except Exception as e:
 			self.after(0, self._on_error, str(e))
+
+	def _init_chart(self) -> None:
+		self._chart_x = []
+		self._chart_y = []
+		self.chart_fig = Figure(figsize=(6.5, 3.0), dpi=100)
+		self.chart_fig.patch.set_facecolor(theme.BG_CARD)
+		self.chart_ax = self.chart_fig.add_subplot(111)
+		self.chart_fig.subplots_adjust(left=0.08, right=0.995, top=0.92, bottom=0.18)
+		self.chart_ax.set_facecolor(theme.BG_CARD)
+		self.chart_ax.tick_params(colors=theme.TEXT_SUB)
+		for spine in self.chart_ax.spines.values():
+			spine.set_color(theme.BG_INPUT)
+		self.chart_ax.set_title("Fitness vs Generation", color=theme.TEXT_MAIN, fontsize=10)
+		self.chart_ax.set_xlabel("Generation", color=theme.TEXT_SUB)
+		self.chart_ax.set_ylabel("Fitness", color=theme.TEXT_SUB)
+		self.chart_ax.grid(True, alpha=0.3)
+		self.chart_line, = self.chart_ax.plot([], [], color=theme.TEXT_OK, linewidth=2)
+		self.chart_canvas = FigureCanvasTkAgg(self.chart_fig, master=self.chart_container)
+		canvas_widget = self.chart_canvas.get_tk_widget()
+		canvas_widget.configure(bg=theme.BG_CARD, highlightthickness=0)
+		canvas_widget.pack(fill="both", expand=True, padx=0, pady=0)
+		self.chart_container.bind("<Configure>", self._on_chart_resize)
+		self.after(50, self._on_chart_resize)
+
+	def _on_chart_resize(self, _event=None) -> None:
+		self.chart_container.update_idletasks()
+		width = self.chart_container.winfo_width()
+		height = self.chart_container.winfo_height()
+		if width <= 1 or height <= 1:
+			self.after(50, self._on_chart_resize)
+			return
+		self.chart_canvas.get_tk_widget().configure(width=width, height=height)
+		self.chart_fig.set_size_inches(
+			width / self.chart_fig.dpi,
+			height / self.chart_fig.dpi,
+			forward=True
+		)
+		self.chart_canvas.draw_idle()
+
+	def _reset_chart(self) -> None:
+		self._chart_x = []
+		self._chart_y = []
+		self.chart_line.set_data([], [])
+		self.chart_ax.set_xlim(0, 1)
+		self.chart_ax.set_ylim(0, 1)
+		self.chart_canvas.draw_idle()
+
+	def _append_chart_point(self, iteration: int, fitness: float) -> None:
+		self._chart_x.append(iteration)
+		self._chart_y.append(fitness)
+		self.chart_line.set_data(self._chart_x, self._chart_y)
+		self.chart_ax.set_xlim(1, max(2, len(self._chart_x)))
+		min_v = min(self._chart_y)
+		max_v = max(self._chart_y)
+		pad = (max_v - min_v) * 0.1 if max_v != min_v else 1.0
+		self.chart_ax.set_ylim(min_v - pad, max_v + pad)
+		self.chart_canvas.draw_idle()
 
 	def _on_done(self, result):
 		self.run_btn.configure(state="normal", text="Run Simulation")
 		formatted = self._format_result(result)
 		self._show_result(formatted, error=False, status_msg="Completed")
+		self._update_summary("Completed", f"{result.execution_time_sec:.4f}s")
 
 	def _on_error(self, err_msg):
 		self.run_btn.configure(state="normal", text="Run Simulation")
 		self._show_result(f"خطأ أثناء التشغيل / Runtime Error:\n{err_msg}", error=True, status_msg="Runtime Error")
+		self._update_summary("Runtime Error", "--", error=True)
 
 	def _format_result(self, result) -> str:
 		lines = []
@@ -540,10 +653,8 @@ class GAView(ctk.CTkFrame):
 
 		sol = result.best_solution_phenotype
 		if isinstance(sol, (list, tuple)):
-			if len(sol) <= 20:
-				lines.append(f"Best Solution Phenotype : {sol}")
-			else:
-				lines.append(f"Best Solution Phenotype : {sol[:15]} ... (+ {len(sol) - 15} more)")
+			lines.append("Best Solution Phenotype :")
+			lines.append(f"{list(sol)}")
 		elif isinstance(sol, dict):
 			lines.append(f"Best Solution Phenotype : {dict(list(sol.items())[:15])} ... (+ {len(sol) - 15} items)")
 		else:

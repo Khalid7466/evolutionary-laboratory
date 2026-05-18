@@ -13,8 +13,12 @@ class EvoLabApp(ctk.CTk):
 			pass
 
 		self.title("EvoLab")
-		self.geometry(f"{theme.WIN_W}x{theme.WIN_H}")
-		self.resizable(False, False)
+		screen_w = self.winfo_screenwidth()
+		screen_h = self.winfo_screenheight()
+		win_w = int(screen_w * 0.95)
+		win_h = int(screen_h * 0.92)
+		self.geometry(f"{win_w}x{win_h}")
+		self.resizable(True, True)
 		self.configure(fg_color=theme.BG_MAIN)
 
 		self._current_frame = None

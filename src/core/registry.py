@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Callable
 import copy
 import time
 
@@ -159,11 +159,11 @@ def _phenotype_from_solution(problem_key: str, solver, best_solution: Any, param
 	return best_solution
 
 
-def run_from_spec(spec: Dict[str, Any]) -> RunResult:
+def run_from_spec(spec: Dict[str, Any], callback: Optional[Callable[..., None]] = None) -> RunResult:
 	solver, problem_key = build_solver(spec)
 	params = spec.get("parameters", {}) if isinstance(spec, dict) else {}
 	start = time.perf_counter()
-	best_solution, best_fitness, history = solver.run()
+	best_solution, best_fitness, history = solver.run(callback=callback)
 	duration = time.perf_counter() - start
 	phenotype = _phenotype_from_solution(problem_key, solver, best_solution, params)
 	return RunResult(

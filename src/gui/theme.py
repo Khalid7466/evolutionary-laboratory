@@ -20,4 +20,4 @@ F_HEAD     = ("Segoe UI", 14, "bold")
 F_BODY     = ("Segoe UI", 12)
 F_SMALL    = ("Segoe UI", 10)
 
-WIN_W, WIN_H = 860, 600
+WIN_W, WIN_H = 1024, 720
