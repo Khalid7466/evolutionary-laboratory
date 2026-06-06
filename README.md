@@ -210,5 +210,3 @@ To ensure maximum software reliability, development is strictly split into two g
 ## 📄 License
 
 This project is developed for academic purposes as part of the **Genetic Algorithms** course curriculum. All core implementations reflect modular, production-ready AI application design.
-
-```
